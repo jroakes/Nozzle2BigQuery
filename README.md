@@ -12,7 +12,7 @@ Local or Google Cloud Function for pulling Nozzle ranking data into BigQuery
 6. Create BigQuery dataset.  We used `client_ranking_data`.
 7. Create table `config` in dataset and map to Google sheet with columns: client, nozzle_domain, and nozzle_dataset.
 8. Create Python 3.7 Cloud Function. Set your Pubsub topic as the trigger. Timeout: 270s.
-9. Add [nozzle2bg.py](https://github.com/jroakes/Nozzle2BigQuery/blob/master/nozzle2bq.py) file into main.py of the function.
+9. Add contents of [nozzle2bg.py](https://github.com/jroakes/Nozzle2BigQuery/blob/master/nozzle2bq.py) file into main.py of the function.
 10. A requirements below to requrements.txt.
 11. Add your Service Account JSON as service_account.json.
 12. Function structure: /main.py
