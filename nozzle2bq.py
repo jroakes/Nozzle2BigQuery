@@ -30,6 +30,12 @@ requirements.txt:
     tqdm
 """
 
+
+# Start Cloud Function ##########################
+
+# -*- coding: utf-8 -*-
+"""Nozzle BigQuery Data Load"""
+
 import json
 import logging
 import base64
@@ -45,16 +51,26 @@ from tqdm.auto import tqdm
 _LOG = logging.getLogger( "locomotive_ranking" )
 _LOG.setLevel(logging.DEBUG)
 
+"""
+requirements.txt file:
+
+    google-cloud-bigquery
+    google-cloud-pubsub
+    pandas
+    tqdm
+"""
+
 
 """ Config Data"""
 
+# Credentials
 
 # TODO: (Developer) Upload service account json as service_account.json
 SERVICE_ACCOUNT_DICT = "service_account.json"
 
-SERVICE_ACCOUNT_SCOPES = ['https://www.googleapis.com/auth/bigquery', 
-                          'https://www.googleapis.com/auth/drive',
-                          'https://www.googleapis.com/auth/pubsub']
+SERVICE_ACCOUNT_SCOPES = ["https://www.googleapis.com/auth/bigquery", 
+                          "https://www.googleapis.com/auth/drive",
+                          "https://www.googleapis.com/auth/pubsub"]
 
 
 
@@ -266,7 +282,7 @@ def build_client(service_account_data=None,
         raise AttributeError("Only `bigquery` and `pubsub` are supported"\
                              " values for --client_type")         
     
-    _LOG.info('{} client built successfully.'.format(client_type))
+    _LOG.info("{} client built successfully.".format(client_type))
 
     return client
 
@@ -315,33 +331,33 @@ def maybe_create_tables(df, client=None):
     success : boolean
         Validation of tables succeeded.
     errors : list
-        List of errors in format {'table': ..., 'error': ...}
+        List of errors in format {"table": ..., "error": ...}
     """
 
     if df is None or not isinstance(df, pd.DataFrame):
-        raise AttributeError('A valid --df `pd.DataFrame` must be provided.')
+        raise AttributeError("A valid --df `pd.DataFrame` must be provided.")
 
     client = client or build_client(client_type="bigquery")
     table_id_format = "{project}.{dataset}.{table}"
 
     schema = [
-      bigquery.SchemaField('requested', 'TIMESTAMP', mode='REQUIRED'),
-      bigquery.SchemaField('keyword_id', 'INTEGER', mode='REQUIRED'),
-      bigquery.SchemaField('keyword_group', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('phrase', 'STRING', mode='REQUIRED'),
-      bigquery.SchemaField('device', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('engine', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('language', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('location', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('country', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('result__url__domain', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('result__url__url', 'STRING', mode='NULLABLE'),
-      bigquery.SchemaField('top_rank', 'INTEGER', mode='NULLABLE'),
-      bigquery.SchemaField('top_paid_adjusted_rank', 'INTEGER', mode='NULLABLE'),
-      bigquery.SchemaField('top_pixels_from_top', 'INTEGER', mode='NULLABLE'),
-      bigquery.SchemaField('click_through_rate', 'FLOAT', mode='NULLABLE'),
-      bigquery.SchemaField('percentage_of_viewport', 'FLOAT', mode='NULLABLE'),
-      bigquery.SchemaField('percentage_of_dom', 'FLOAT', mode='NULLABLE')
+      bigquery.SchemaField("requested", "TIMESTAMP", mode="REQUIRED"),
+      bigquery.SchemaField("keyword_id", "INTEGER", mode="REQUIRED"),
+      bigquery.SchemaField("keyword_group", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("phrase", "STRING", mode="REQUIRED"),
+      bigquery.SchemaField("device", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("engine", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("language", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("location", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("country", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("result__url__domain", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("result__url__url", "STRING", mode="NULLABLE"),
+      bigquery.SchemaField("top_rank", "INTEGER", mode="NULLABLE"),
+      bigquery.SchemaField("top_paid_adjusted_rank", "INTEGER", mode="NULLABLE"),
+      bigquery.SchemaField("top_pixels_from_top", "INTEGER", mode="NULLABLE"),
+      bigquery.SchemaField("click_through_rate", "FLOAT", mode="NULLABLE"),
+      bigquery.SchemaField("percentage_of_viewport", "FLOAT", mode="NULLABLE"),
+      bigquery.SchemaField("percentage_of_dom", "FLOAT", mode="NULLABLE")
     ]
 
     errors = []
@@ -382,7 +398,7 @@ def maybe_create_tables(df, client=None):
 
             except Exception as e:
                 _LOG.error(str(e))
-                error_info = {'table': table_id, 'error': str(e)}
+                error_info = {"table": table_id, "error": str(e)}
                 errors.append(error_info)
 
     return len(errors) == 0, errors
@@ -441,14 +457,14 @@ def update_nozzle_ranking(df, query, client=None):
     success : boolean
         Validation of tables succeeded.
     errors : list
-        List of errors in format {'table': ..., 'error': ...}
+        List of errors in format {"table": ..., "error": ...}
     """
 
     if not query or not isinstance(query, str):
-        raise AttributeError('A valid --query `str` must be provided.')
+        raise AttributeError("A valid --query `str` must be provided.")
 
     if df is None or not isinstance(df, pd.DataFrame):
-        raise AttributeError('A valid --df `pd.DataFrame` must be provided.')
+        raise AttributeError("A valid --df `pd.DataFrame` must be provided.")
 
     client = client or build_client(client_type="bigquery")
 
@@ -494,7 +510,7 @@ def update_nozzle_ranking(df, query, client=None):
             except Exception as e:
 
                 _LOG.error(str(e))
-                error_info = {'table': dest_table_id, 'error': str(e)}
+                error_info = {"table": dest_table_id, "error": str(e)}
                 errors.append(error_info)
 
 
@@ -517,7 +533,7 @@ def publish_message(message, client=None):
         Result
     """
 
-    bytes_message = bytes(message, encoding='utf-8')
+    bytes_message = bytes(message, encoding="utf-8")
 
     publisher_client = client or build_client(client_type="pubsub")
     
@@ -544,8 +560,8 @@ def get_message(event):
         The message or empy string if no data
   
     """
-    pubsub_message = base64.b64decode(event['data']).decode('utf-8')
-    pubsub_data = json.loads(pubsub_message)
+    pubsub_message = base64.b64decode(event['data']).decode("utf-8")
+    pubsub_data = json.loads(pubsub_message.replace("\'", "\""))
     
     if isinstance(pubsub_data, dict) and 'job' in pubsub_data:
         return pubsub_data['job']
@@ -568,12 +584,12 @@ def run_client_messages(df, client=None):
     success : boolean
         Validation of tables succeeded.
     errors : list
-        List of errors in format {'table': ..., 'error': ...}
+        List of errors in format {"table": ..., "error": ...}
   
     """
 
     if df is None or not isinstance(df, pd.DataFrame):
-        raise AttributeError('A valid --df `pd.DataFrame` must be provided.')
+        raise AttributeError("A valid --df `pd.DataFrame` must be provided.")
 
     publisher_client = client or build_client(client_type="pubsub")
 
@@ -584,7 +600,7 @@ def run_client_messages(df, client=None):
 
         nozzle_dataset = row.nozzle_dataset.lower().strip()
 
-        message   = json.dumps({'job': 'run {}'.format(nozzle_dataset)})
+        message   = json.dumps({"job": "run {}".format(nozzle_dataset)})
 
         pub_job = publish_message(message, client=publisher_client)
 
@@ -593,8 +609,8 @@ def run_client_messages(df, client=None):
         if result:
             results.append(result)
         else:
-            error_info = {'table': nozzle_dataset, 'error': \
-                          'Error publishing message: {}'.format(message)}
+            error_info = {"table": nozzle_dataset, "error": \
+                          "Error publishing message: {}".format(message)}
             errors.append(error_info)
 
    
@@ -619,11 +635,11 @@ def run_sql_updates(df, client=None):
     success : boolean
         Validation of tables succeeded.
     errors : list
-        List of errors in format {'table': ..., 'error': ...}
+        List of errors in format {"table": ..., "error": ...}
     """
 
     if df is None or not isinstance(df, pd.DataFrame):
-        raise AttributeError('A valid --df `pd.DataFrame` must be provided.')
+        raise AttributeError("A valid --df `pd.DataFrame` must be provided.")
 
     errors = []
     success = True
@@ -642,11 +658,11 @@ def run_sql_updates(df, client=None):
         if success:
             _LOG.info("Data load succeeded.")
         else:
-            _LOG.error('run_notebook failed updating tables.')
+            _LOG.error("run_notebook failed updating tables.")
             errors.extend(run_errors)
 
     else:
-        _LOG.error('run_notebook failed creating tables.')
+        _LOG.error("run_notebook failed creating tables.")
         errors.extend(run_errors)
 
     
@@ -692,31 +708,31 @@ def run_job(event=None, context=None):
 
         data = get_message(event)
 
-        if data == 'run all':
+        if data == "run all":
             success, run_errors = run_client_messages(clients_df)
             errors.extend(run_errors)
 
         elif 'run' in data:
-            nozzle_dataset = data.replace('run', '').strip().lower()
+            nozzle_dataset = data.replace("run", "").strip().lower()
             clients_df = clients_df[clients_df.nozzle_dataset.str.contains(nozzle_dataset)]
             success, run_errors = run_sql_updates(clients_df, client=client)
             errors.extend(run_errors)
 
         else:
-            err = 'Invalid pubsub data: {}'.format(data)
+            err = "Invalid pubsub data: {}".format(data)
             _LOG.error(err)
             success = False
-            errors.append({'table': None, 'error': err})       
+            errors.append({"table": None, "error": err})       
 
     else:
         # This is a notebook.
         success, run_errors = run_sql_updates(clients_df, client=client)
 
     if success:
-        _LOG.info('Run Succeeded!')
+        _LOG.info("Run Succeeded!")
         return True
     else:
-        _LOG.error('Run Failed!')
+        _LOG.error("Run Failed!")
         log_errors(errors)
         return False
 
@@ -730,13 +746,14 @@ def t1():
 
 def t2():
     # Run Job as Cloud Function (one)
-    message   = json.dumps({'job': 'run locomotive_locomotive'})
-    event = {'data': base64.b64encode(bytes(message, encoding='utf-8'))}
+    message   = json.dumps({"job": "run locomotive_locomotive"})
+    event = {"data": base64.b64encode(bytes(message, encoding="utf-8"))}
     return run_job(event=event)
 
 def t3():
     # Run Job as Cloud Function (all)
-    message   = json.dumps({'job': 'run all'})
-    event = {'data': base64.b64encode(bytes(message, encoding='utf-8'))}
+    message   = json.dumps({"job": "run all"})
+    event = {"data": base64.b64encode(bytes(message, encoding="utf-8"))}
     return run_job(event=event)
 
+# End Cloud Function
